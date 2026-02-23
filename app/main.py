@@ -1,4 +1,4 @@
-"""FastAPI app: configure middleware up-front, manage Motor client in lifespan, mount routes."""
+"""FastAPI app: configure middleware up-front, manage PyMongo async client in lifespan, mount routes."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import AsyncMongoClient
 from starlette.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
@@ -27,14 +27,14 @@ def _parse_cors_origins_from_env() -> list[str]:
 async def lifespan(app: FastAPI):
     settings = get_settings()
 
-    client = AsyncIOMotorClient(settings.mongodb_url)
+    client = AsyncMongoClient(settings.mongodb_url)
     app.state.mongo_client = client
     app.state.db = client[settings.db_name]
 
     try:
         yield
     finally:
-        client.close()
+        await client.close()
 
 
 app = FastAPI(title="revmatch", lifespan=lifespan)

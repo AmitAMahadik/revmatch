@@ -5,7 +5,7 @@ Concise rules for the revmatch backend and repo. Follow these when adding or cha
 ## Stack
 
 - **API:** Async FastAPI only; use `async def` for route handlers and I/O.
-- **Database:** Motor (async MongoDB driver). No sync DB drivers (e.g. no pymongo in app code).
+- **Database:** PyMongo async API (async MongoDB driver). No sync DB drivers in app code.
 
 ## Secrets and config
 
@@ -25,6 +25,6 @@ Concise rules for the revmatch backend and repo. Follow these when adding or cha
 ## Ops and quality
 
 - **Dockerfile:** Include a production-ready Dockerfile (e.g. `python:3.12-slim`). Do not bake secrets into the image; require `MONGO_URI` (or equivalent) at runtime.
-- **Requirements:** Maintain a `requirements.txt` with pinned dependencies (FastAPI, uvicorn, motor, pydantic-settings).
+- **Requirements:** Maintain a `requirements.txt` with pinned dependencies (FastAPI, uvicorn, pymongo[srv], pydantic-settings).
 - **README:** Document how to run locally and how to build/deploy with Docker (including required env vars).
 - **Tests:** Include basic tests: at least health endpoint and recommendations endpoint (mock service or test DB). Runnable via `pytest` or the project’s test runner.

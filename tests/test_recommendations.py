@@ -12,6 +12,7 @@ if not hasattr(app.state, "db"):
 
 client = TestClient(app)
 
+# Shape matches RecommendationItem (response_model strips extra fields like specSheetId)
 MOCK_ITEMS = [
     {
         "trimId": "tr_porsche_718_cayman_982_gts_4_0",
@@ -19,7 +20,15 @@ MOCK_ITEMS = [
         "bodyStyle": "Coupe",
         "year": 2024,
         "market": "US",
-        "specSheetId": "sp_tr_porsche_718_cayman_982_gts_4_0_2024_us",
+        "drivenWheels": "RWD",
+        "hp": 394,
+        "redline": 7800,
+        "scores": {
+            "revHappiness": 0.85,
+            "dailyCompliance": 0.72,
+            "practicality": 0.68,
+            "thrill": 0.91,
+        },
     }
 ]
 
@@ -30,8 +39,7 @@ def test_recommendations_returns_items(mock_get):
     response = client.get("/recommendations?limit=10")
     assert response.status_code == 200
     data = response.json()
-    assert "items" in data
-    assert data["items"] == MOCK_ITEMS
+    assert data == {"items": MOCK_ITEMS}
     mock_get.assert_called_once()
 
 
@@ -40,6 +48,8 @@ def test_recommendations_accepts_year_and_limit(mock_get):
     mock_get.return_value = []
     response = client.get("/recommendations?year=2024&limit=5")
     assert response.status_code == 200
+    data = response.json()
+    assert data == {"items": []}
     mock_get.assert_called_once()
     call_kw = mock_get.call_args[1]
     assert call_kw.get("year") == 2024

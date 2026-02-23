@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.asynchronous.database import AsyncDatabase
 
 
 async def get_recommendations(
-    db: AsyncIOMotorDatabase,
+    db: AsyncDatabase,
     *,
     year: int | None = None,
     limit: int = 50,
@@ -94,5 +94,5 @@ async def get_recommendations(
         {"$limit": int(limit)},
     ]
 
-    cursor = spec_coll.aggregate(pipeline)
+    cursor = await spec_coll.aggregate(pipeline)
     return await cursor.to_list(length=int(limit))
