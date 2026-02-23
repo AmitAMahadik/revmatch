@@ -1,0 +1,317 @@
+{
+  "_comment": "Review only. No DB writes. DATA_CONTRACT.md strict. US-only: 991.2 Carrera S (2019), 992.1 Targa 4S (2024), 992.1 Carrera T (2024).",
+  "validations": {
+    "unique_models": "No new models - using existing md_911",
+    "unique_generations": "All generations exist: gen_porsche_991_2, gen_porsche_992 (from prior batches); generations_upsert empty",
+    "unique_trims": "(makeId, modelId, generationId, trimName, bodyStyle) - 991.2 Carrera S, 992.1 Targa 4S, 992.1 Carrera T all new for batch4",
+    "unique_specSheets": "(trimId, year, market) - all 3 new for batch4",
+    "unique_trimFeatures": "(trimId, year, market) - all 3 new for batch4",
+    "unique_characterScores": "(trimId, year, market, modelVersion) - all 3 new for batch4",
+    "year_validity": "Each trim years.start <= year <= years.end",
+    "sourceRef": "sourceRefs_upsert covers 911 2019 and 911 2024; all specSheets reference valid sourceRefIds"
+  },
+  "sourceRefs_upsert": [
+    {
+      "_id": "src_porsche_911_specs_2019_b2c3",
+      "type": "SpecTable",
+      "publisher": "Porsche",
+      "title": "911 Technical Specifications 2019"
+    },
+    {
+      "_id": "src_porsche_911_specs_2024_a1b2",
+      "type": "SpecTable",
+      "publisher": "Porsche",
+      "title": "911 Technical Specifications 2024"
+    }
+  ],
+  "models_upsert": [],
+  "generations_upsert": [],
+  "trims_insert": [
+    {
+      "_id": "tr_porsche_911_991_2_carrera_s",
+      "makeId": "mk_porsche",
+      "modelId": "md_911",
+      "generationId": "gen_porsche_991_2",
+      "trimName": "Carrera S",
+      "bodyStyle": "Coupe",
+      "years": {
+        "start": 2016,
+        "end": 2019
+      },
+      "marketAvailability": [
+        "US"
+      ],
+      "drivetrainLayouts": [
+        "RWD"
+      ],
+      "aliases": [
+        "991.2 Carrera S",
+        "911 Carrera S"
+      ]
+    },
+    {
+      "_id": "tr_porsche_911_992_1_targa_4_s",
+      "makeId": "mk_porsche",
+      "modelId": "md_911",
+      "generationId": "gen_porsche_992",
+      "trimName": "Targa 4S",
+      "bodyStyle": "Targa",
+      "years": {
+        "start": 2020,
+        "end": 2025
+      },
+      "marketAvailability": [
+        "US"
+      ],
+      "drivetrainLayouts": [
+        "AWD"
+      ],
+      "aliases": [
+        "992.1 Targa 4S",
+        "911 Targa 4S"
+      ]
+    },
+    {
+      "_id": "tr_porsche_911_992_1_carrera_t",
+      "makeId": "mk_porsche",
+      "modelId": "md_911",
+      "generationId": "gen_porsche_992",
+      "trimName": "Carrera T",
+      "bodyStyle": "Coupe",
+      "years": {
+        "start": 2020,
+        "end": 2025
+      },
+      "marketAvailability": [
+        "US"
+      ],
+      "drivetrainLayouts": [
+        "RWD"
+      ],
+      "aliases": [
+        "992.1 Carrera T",
+        "911 Carrera T"
+      ]
+    }
+  ],
+  "specSheets_insert": [
+    {
+      "_id": "sp_tr_porsche_911_991_2_carrera_s_2019_us",
+      "trimId": "tr_porsche_911_991_2_carrera_s",
+      "year": 2019,
+      "market": "US",
+      "sourceRefIds": [
+        "src_porsche_911_specs_2019_b2c3"
+      ],
+      "engine": {
+        "aspiration": "Turbo",
+        "configuration": "F6",
+        "displacementL": 3,
+        "redlineRpm": 7500,
+        "hybrid": false,
+        "fuel": "Gasoline"
+      },
+      "output": {
+        "powerHp": 420,
+        "powerKw": 313,
+        "torqueLbFt": 368,
+        "torqueNm": 500
+      },
+      "drivetrain": {
+        "drivenWheels": "RWD",
+        "transmissions": [
+          {
+            "type": "Manual",
+            "gears": 7
+          },
+          {
+            "type": "PDK",
+            "gears": 7
+          }
+        ]
+      },
+      "chassis": {
+        "steering": "EPS"
+      },
+      "dimensions": {
+        "curbWeightLb": 3153,
+        "wheelbaseIn": 96.5
+      },
+      "performance": {
+        "zeroToSixtySec": 4
+      }
+    },
+    {
+      "_id": "sp_tr_porsche_911_992_1_targa_4_s_2024_us",
+      "trimId": "tr_porsche_911_992_1_targa_4_s",
+      "year": 2024,
+      "market": "US",
+      "sourceRefIds": [
+        "src_porsche_911_specs_2024_a1b2"
+      ],
+      "engine": {
+        "aspiration": "Turbo",
+        "configuration": "F6",
+        "displacementL": 3,
+        "redlineRpm": 7500,
+        "hybrid": false,
+        "fuel": "Gasoline"
+      },
+      "output": {
+        "powerHp": 443,
+        "powerKw": 330,
+        "torqueLbFt": 390,
+        "torqueNm": 529
+      },
+      "drivetrain": {
+        "drivenWheels": "AWD",
+        "transmissions": [
+          {
+            "type": "PDK",
+            "gears": 8
+          }
+        ]
+      },
+      "chassis": {
+        "steering": "EPS"
+      },
+      "dimensions": {
+        "curbWeightLb": 3483,
+        "wheelbaseIn": 96.5
+      },
+      "performance": {
+        "zeroToSixtySec": 3.8
+      }
+    },
+    {
+      "_id": "sp_tr_porsche_911_992_1_carrera_t_2024_us",
+      "trimId": "tr_porsche_911_992_1_carrera_t",
+      "year": 2024,
+      "market": "US",
+      "sourceRefIds": [
+        "src_porsche_911_specs_2024_a1b2"
+      ],
+      "engine": {
+        "aspiration": "Turbo",
+        "configuration": "F6",
+        "displacementL": 3,
+        "redlineRpm": 7500,
+        "hybrid": false,
+        "fuel": "Gasoline"
+      },
+      "output": {
+        "powerHp": 379,
+        "powerKw": 282,
+        "torqueLbFt": 331,
+        "torqueNm": 448
+      },
+      "drivetrain": {
+        "drivenWheels": "RWD",
+        "transmissions": [
+          {
+            "type": "Manual",
+            "gears": 7
+          }
+        ]
+      },
+      "chassis": {
+        "steering": "EPS"
+      },
+      "dimensions": {
+        "curbWeightLb": 3197,
+        "wheelbaseIn": 96.5
+      },
+      "performance": {
+        "zeroToSixtySec": 4.3
+      }
+    }
+  ],
+  "trimFeatures_insert": [
+    {
+      "_id": "tf_tr_porsche_911_991_2_carrera_s_2019_us",
+      "trimId": "tr_porsche_911_991_2_carrera_s",
+      "year": 2019,
+      "market": "US",
+      "standardFeatureIds": [
+        "ft_pasm",
+        "ft_sport_chrono"
+      ],
+      "optionalFeatureIds": [
+        "ft_pse"
+      ]
+    },
+    {
+      "_id": "tf_tr_porsche_911_992_1_targa_4_s_2024_us",
+      "trimId": "tr_porsche_911_992_1_targa_4_s",
+      "year": 2024,
+      "market": "US",
+      "standardFeatureIds": [
+        "ft_pasm",
+        "ft_sport_chrono"
+      ],
+      "optionalFeatureIds": [
+        "ft_pse"
+      ]
+    },
+    {
+      "_id": "tf_tr_porsche_911_992_1_carrera_t_2024_us",
+      "trimId": "tr_porsche_911_992_1_carrera_t",
+      "year": 2024,
+      "market": "US",
+      "standardFeatureIds": [
+        "ft_pasm",
+        "ft_sport_chrono"
+      ],
+      "optionalFeatureIds": [
+        "ft_pse"
+      ]
+    }
+  ],
+  "characterScores_insert": [
+    {
+      "_id": "cs_tr_porsche_911_991_2_carrera_s_2019_us_v1_0_0",
+      "trimId": "tr_porsche_911_991_2_carrera_s",
+      "year": 2019,
+      "market": "US",
+      "modelVersion": "v1.0.0",
+      "scores": {
+        "revHappiness": 8.8,
+        "acousticDrama": 8.4,
+        "steeringFeel": 8.6,
+        "dailyCompliance": 7.6,
+        "trackReadiness": 8.4,
+        "depreciationStability": 8.2
+      }
+    },
+    {
+      "_id": "cs_tr_porsche_911_992_1_targa_4_s_2024_us_v1_0_0",
+      "trimId": "tr_porsche_911_992_1_targa_4_s",
+      "year": 2024,
+      "market": "US",
+      "modelVersion": "v1.0.0",
+      "scores": {
+        "revHappiness": 8.6,
+        "acousticDrama": 8.2,
+        "steeringFeel": 8.2,
+        "dailyCompliance": 8,
+        "trackReadiness": 8.2,
+        "depreciationStability": 8.4
+      }
+    },
+    {
+      "_id": "cs_tr_porsche_911_992_1_carrera_t_2024_us_v1_0_0",
+      "trimId": "tr_porsche_911_992_1_carrera_t",
+      "year": 2024,
+      "market": "US",
+      "modelVersion": "v1.0.0",
+      "scores": {
+        "revHappiness": 8.8,
+        "acousticDrama": 8.4,
+        "steeringFeel": 8.6,
+        "dailyCompliance": 7.8,
+        "trackReadiness": 8.4,
+        "depreciationStability": 8.2
+      }
+    }
+  ]
+}

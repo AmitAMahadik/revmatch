@@ -1,0 +1,241 @@
+{
+  "_comment": "Full documents for review only. No DB writes yet. DATA_CONTRACT.md strict. US-only trims: 997.2 Carrera S (2011), 718 Boxster GTS 4.0 (2024), 992.1 Carrera S (2024).",
+  "validations": {
+    "unique_models": "No new models - using existing md_911, md_porsche_718_boxster",
+    "unique_generations": "All generations exist: gen_porsche_997_2, gen_porsche_982_boxster, gen_porsche_992 (from prior batches); generations_upsert empty",
+    "unique_trims": "(makeId, modelId, generationId, trimName, bodyStyle) - 997.2 Carrera S and 992.1 Carrera S new; 718 Boxster GTS 4.0 may exist from trim_upsert_plans",
+    "unique_specSheets": "(trimId, year, market) - all 3 new for batch3",
+    "unique_trimFeatures": "(trimId, year, market) - all 3 new for batch3",
+    "unique_characterScores": "(trimId, year, market, modelVersion) - all 3 new for batch3",
+    "year_validity": "Each trim years.start <= year <= years.end",
+    "sourceRef": "sourceRefs_upsert covers 911 2011, 911 2024, 718 2024; all specSheets reference valid sourceRefIds"
+  },
+  "sourceRefs_upsert": [
+    {
+      "_id": "src_porsche_911_specs_2011_c3d4",
+      "type": "SpecTable",
+      "publisher": "Porsche",
+      "title": "911 Technical Specifications 2011"
+    },
+    {
+      "_id": "src_porsche_911_specs_2024_a1b2",
+      "type": "SpecTable",
+      "publisher": "Porsche",
+      "title": "911 Technical Specifications 2024"
+    },
+    {
+      "_id": "src_porsche_presskit_2024_718",
+      "type": "SpecTable",
+      "publisher": "Porsche",
+      "title": "718 Boxster Cayman Technical Data 2024"
+    }
+  ],
+  "models_upsert": [],
+  "generations_upsert": [],
+  "trims_insert": [
+    {
+      "_id": "tr_porsche_911_997_2_carrera_s",
+      "makeId": "mk_porsche",
+      "modelId": "md_911",
+      "generationId": "gen_porsche_997_2",
+      "trimName": "Carrera S",
+      "bodyStyle": "Coupe",
+      "years": { "start": 2009, "end": 2012 },
+      "marketAvailability": ["US"],
+      "drivetrainLayouts": ["RWD"],
+      "aliases": ["997.2 Carrera S", "911 Carrera S"]
+    },
+    {
+      "_id": "tr_porsche_718_boxster_982_gts_4_0",
+      "makeId": "mk_porsche",
+      "modelId": "md_porsche_718_boxster",
+      "generationId": "gen_porsche_982_boxster",
+      "trimName": "GTS 4.0",
+      "bodyStyle": "Convertible",
+      "years": { "start": 2021, "end": 2024 },
+      "marketAvailability": ["US"],
+      "drivetrainLayouts": ["RWD"],
+      "aliases": ["718 Boxster GTS 4.0"]
+    },
+    {
+      "_id": "tr_porsche_911_992_1_carrera_s",
+      "makeId": "mk_porsche",
+      "modelId": "md_911",
+      "generationId": "gen_porsche_992",
+      "trimName": "Carrera S",
+      "bodyStyle": "Coupe",
+      "years": { "start": 2020, "end": 2025 },
+      "marketAvailability": ["US"],
+      "drivetrainLayouts": ["RWD"],
+      "aliases": ["992.1 Carrera S", "911 Carrera S"]
+    }
+  ],
+  "specSheets_insert": [
+    {
+      "_id": "sp_tr_porsche_911_997_2_carrera_s_2011_us",
+      "trimId": "tr_porsche_911_997_2_carrera_s",
+      "year": 2011,
+      "market": "US",
+      "sourceRefIds": ["src_porsche_911_specs_2011_c3d4"],
+      "engine": {
+        "aspiration": "NA",
+        "configuration": "F6",
+        "displacementL": 3.8,
+        "redlineRpm": 7400,
+        "hybrid": false,
+        "fuel": "Gasoline"
+      },
+      "output": {
+        "powerHp": 385,
+        "powerKw": 287,
+        "torqueLbFt": 310,
+        "torqueNm": 420
+      },
+      "drivetrain": {
+        "drivenWheels": "RWD",
+        "transmissions": [
+          { "type": "Manual", "gears": 6 },
+          { "type": "PDK", "gears": 7 }
+        ]
+      },
+      "chassis": { "steering": "Hydraulic" },
+      "dimensions": { "curbWeightLb": 3086, "wheelbaseIn": 92.5 },
+      "performance": { "zeroToSixtySec": 4.3 }
+    },
+    {
+      "_id": "sp_tr_porsche_718_boxster_982_gts_4_0_2024_us",
+      "trimId": "tr_porsche_718_boxster_982_gts_4_0",
+      "year": 2024,
+      "market": "US",
+      "sourceRefIds": ["src_porsche_presskit_2024_718"],
+      "engine": {
+        "aspiration": "NA",
+        "configuration": "F6",
+        "displacementL": 4,
+        "redlineRpm": 7800,
+        "hybrid": false,
+        "fuel": "Gasoline"
+      },
+      "output": {
+        "powerHp": 394,
+        "powerKw": 294,
+        "torqueLbFt": 309,
+        "torqueNm": 420
+      },
+      "drivetrain": {
+        "drivenWheels": "RWD",
+        "transmissions": [
+          { "type": "Manual", "gears": 6 },
+          { "type": "PDK", "gears": 7 }
+        ]
+      },
+      "chassis": { "steering": "EPS" },
+      "dimensions": { "curbWeightLb": 3097, "wheelbaseIn": 97.4 },
+      "performance": { "zeroToSixtySec": 4.3 }
+    },
+    {
+      "_id": "sp_tr_porsche_911_992_1_carrera_s_2024_us",
+      "trimId": "tr_porsche_911_992_1_carrera_s",
+      "year": 2024,
+      "market": "US",
+      "sourceRefIds": ["src_porsche_911_specs_2024_a1b2"],
+      "engine": {
+        "aspiration": "Turbo",
+        "configuration": "F6",
+        "displacementL": 3,
+        "redlineRpm": 7500,
+        "hybrid": false,
+        "fuel": "Gasoline"
+      },
+      "output": {
+        "powerHp": 443,
+        "powerKw": 330,
+        "torqueLbFt": 390,
+        "torqueNm": 529
+      },
+      "drivetrain": {
+        "drivenWheels": "RWD",
+        "transmissions": [
+          { "type": "Manual", "gears": 7 },
+          { "type": "PDK", "gears": 8 }
+        ]
+      },
+      "chassis": { "steering": "EPS" },
+      "dimensions": { "curbWeightLb": 3197, "wheelbaseIn": 96.5 },
+      "performance": { "zeroToSixtySec": 3.7 }
+    }
+  ],
+  "trimFeatures_insert": [
+    {
+      "_id": "tf_tr_porsche_911_997_2_carrera_s_2011_us",
+      "trimId": "tr_porsche_911_997_2_carrera_s",
+      "year": 2011,
+      "market": "US",
+      "standardFeatureIds": ["ft_pasm", "ft_sport_chrono"],
+      "optionalFeatureIds": ["ft_pse"]
+    },
+    {
+      "_id": "tf_tr_porsche_718_boxster_982_gts_4_0_2024_us",
+      "trimId": "tr_porsche_718_boxster_982_gts_4_0",
+      "year": 2024,
+      "market": "US",
+      "standardFeatureIds": ["ft_pasm", "ft_sport_chrono"],
+      "optionalFeatureIds": ["ft_pse"]
+    },
+    {
+      "_id": "tf_tr_porsche_911_992_1_carrera_s_2024_us",
+      "trimId": "tr_porsche_911_992_1_carrera_s",
+      "year": 2024,
+      "market": "US",
+      "standardFeatureIds": ["ft_pasm", "ft_sport_chrono"],
+      "optionalFeatureIds": ["ft_pse"]
+    }
+  ],
+  "characterScores_insert": [
+    {
+      "_id": "cs_tr_porsche_911_997_2_carrera_s_2011_us_v1_0_0",
+      "trimId": "tr_porsche_911_997_2_carrera_s",
+      "year": 2011,
+      "market": "US",
+      "modelVersion": "v1.0.0",
+      "scores": {
+        "revHappiness": 9,
+        "acousticDrama": 8.8,
+        "steeringFeel": 9.2,
+        "dailyCompliance": 7.4,
+        "trackReadiness": 8.4,
+        "depreciationStability": 8
+      }
+    },
+    {
+      "_id": "cs_tr_porsche_718_boxster_982_gts_4_0_2024_us_v1_0_0",
+      "trimId": "tr_porsche_718_boxster_982_gts_4_0",
+      "year": 2024,
+      "market": "US",
+      "modelVersion": "v1.0.0",
+      "scores": {
+        "revHappiness": 9.4,
+        "acousticDrama": 9.1,
+        "steeringFeel": 7.6,
+        "dailyCompliance": 7.2,
+        "trackReadiness": 8.2,
+        "depreciationStability": 8
+      }
+    },
+    {
+      "_id": "cs_tr_porsche_911_992_1_carrera_s_2024_us_v1_0_0",
+      "trimId": "tr_porsche_911_992_1_carrera_s",
+      "year": 2024,
+      "market": "US",
+      "modelVersion": "v1.0.0",
+      "scores": {
+        "revHappiness": 8.8,
+        "acousticDrama": 8.4,
+        "steeringFeel": 8.4,
+        "dailyCompliance": 7.8,
+        "trackReadiness": 8.6,
+        "depreciationStability": 8.4
+      }
+    }
+  ]
+}
