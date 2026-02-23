@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "mongodb-atlas": {
+      "command": "/bin/bash",
+      "args": ["-lc", "~/revmatch/scripts/run-mongo-mcp.sh"]
+    }
+  }
+}
+
