@@ -1,0 +1,70 @@
+# =========================
+# OS / System
+# =========================
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# macOS folders
+__MACOSX/
+
+# =========================
+# Environment / Secrets
+# =========================
+.env
+.env.*
+!.env.example
+
+# Cursor / local config overrides
+.cursor.local/
+.cursor/settings.local.json
+
+# =========================
+# Node / MCP
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# =========================
+# Python (if FastAPI later)
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pytest_cache/
+.venv/
+venv/
+env/
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# Build / Dist
+# =========================
+dist/
+build/
+out/
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# Swift / Xcode (future iOS app)
+# =========================
+DerivedData/
+*.xcworkspace
+*.xcuserdata
+*.xcuserstate
+build/
+
