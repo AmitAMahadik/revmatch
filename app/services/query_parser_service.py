@@ -39,25 +39,39 @@ def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, value))
 
 
-def _clamp_min_scores(min_scores: dict[str, Any] | None) -> dict[str, float]:
-    """Normalize minScores.
+MIN_SCORE_KEYS_ORDER: Final[tuple[str, ...]] = (
+    "revHappiness",
+    "acousticDrama",
+    "steeringFeel",
+    "dailyCompliance",
+    "trackReadiness",
+    "depreciationStability",
+)
 
-    - Keeps only allowed score keys
-    - Drops nulls and invalid types
+
+def _clamp_min_scores(min_scores: dict[str, Any] | None) -> dict[str, float | None] | None:
+    """Normalize minScores to a strict + complete shape.
+
+    - Returns None if input is missing or not a dict
+    - Otherwise returns a dict with all 6 keys; use None for missing/unspecified
     - Clamps numeric thresholds to [0, 10]
+    - Does not prune None keys
     """
-    if not min_scores or not isinstance(min_scores, dict):
-        return {}
+    if min_scores is None or not isinstance(min_scores, dict):
+        return None
 
-    result: dict[str, float] = {}
-    for k, v in min_scores.items():
-        if k not in ALLOWED_MIN_SCORE_KEYS:
-            continue
+    result: dict[str, float | None] = {}
+    for k in MIN_SCORE_KEYS_ORDER:
+        v = min_scores.get(k)
         if v is None:
-            # Treat null as "not specified" and drop it.
-            continue
-        if isinstance(v, (int, float)):
-            result[k] = _clamp(float(v), 0.0, 10.0)
+            result[k] = None
+        elif isinstance(v, (int, float)):
+            fv = float(v)
+            if 0 < fv <= 1:
+                fv = fv * 10
+            result[k] = _clamp(fv, 0.0, 10.0)
+        else:
+            result[k] = None
 
     return result
 
@@ -148,12 +162,13 @@ class QueryParserService:
         if tx is not None and tx not in ALLOWED_TRANSMISSIONS:
             filters["transmission"] = None
 
-        # Normalize minScores values to a clean dict of numeric thresholds
+        # Normalize minScores to strict + complete shape (all 6 keys, None for unspecified)
         if "minScores" in filters:
-            filters["minScores"] = _clamp_min_scores(filters.get("minScores"))
-            # If empty, set to None for cleanliness
-            if not filters["minScores"]:
+            normalized = _clamp_min_scores(filters.get("minScores"))
+            if normalized is None:
                 filters["minScores"] = None
+            else:
+                filters["minScores"] = normalized
 
         # Normalize weights
         weights = _normalize_weights(weights)

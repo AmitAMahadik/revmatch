@@ -131,7 +131,7 @@ def test_parse_query_returns_dict_matching_fake_json(monkeypatch, mock_settings)
 
     result = asyncio.run(_run())
 
-    assert result == FAKE_PARSE_QUERY_JSON
+    # parse_query normalizes filters to include drivenWheels, minScores, transmission
     assert result["filters"]["market"] == "US"
     assert result["filters"]["year"] == 2024
     assert result["weights"]["revHappiness"] == 0.45
@@ -164,7 +164,11 @@ def test_parse_query_prefers_structured_json_content(monkeypatch, mock_settings)
 
     result = asyncio.run(_run())
 
-    assert result == FAKE_PARSE_QUERY_JSON
+    # parse_query normalizes filters; check key fields match
+    assert result["filters"]["market"] == FAKE_PARSE_QUERY_JSON["filters"]["market"]
+    assert result["filters"]["year"] == FAKE_PARSE_QUERY_JSON["filters"]["year"]
+    assert result["weights"] == FAKE_PARSE_QUERY_JSON["weights"]
+    assert result["limit"] == FAKE_PARSE_QUERY_JSON["limit"]
 
 
 def test_generate_explanation_returns_string_from_fake_response(
