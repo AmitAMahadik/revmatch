@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     # Optional DB ping during /health
     health_db_check: bool = Field(False, validation_alias="HEALTH_DB_CHECK")
 
+    # OpenAI (optional)
+    openai_api_key: str | None = Field(default=None, validation_alias="OPENAI_API_KEY")
+    openai_model: str = Field(default="gpt-4o-mini", validation_alias="OPENAI_MODEL")
+
+    def has_openai(self) -> bool:
+        return bool(self.openai_api_key)
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _parse_cors_origins(cls, v: Any) -> list[str]:

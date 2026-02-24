@@ -10,7 +10,7 @@ from pymongo import AsyncMongoClient
 from starlette.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routes import health, recommendations
+from app.routes import find_next, health, recommendations
 
 
 def _parse_cors_origins_from_env() -> list[str]:
@@ -53,3 +53,4 @@ app.add_middleware(
 # Routes
 app.include_router(health.router, tags=["health"])
 app.include_router(recommendations.router, prefix="/recommendations", tags=["recommendations"])
+app.include_router(find_next.router, prefix="/v1", tags=["find-next"])
