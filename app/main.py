@@ -9,8 +9,9 @@ from fastapi import FastAPI
 from pymongo import AsyncMongoClient
 from starlette.middleware.cors import CORSMiddleware
 
+from app.clients.openai_client import OpenAIClient
 from app.config import get_settings
-from app.routes import find_next, health, recommendations
+from app.routes import chat, find_next, health, preferences, recommendations
 
 
 def _parse_cors_origins_from_env() -> list[str]:
@@ -31,10 +32,17 @@ async def lifespan(app: FastAPI):
     app.state.mongo_client = client
     app.state.db = client[settings.db_name]
 
+    openai_client = OpenAIClient()
+    app.state.openai_client = openai_client
+
     try:
         yield
     finally:
-        await client.close()
+        # Close OpenAI client first (it may have in-flight requests).
+        try:
+            await openai_client.aclose()
+        finally:
+            await client.close()
 
 
 app = FastAPI(title="revmatch", lifespan=lifespan)
@@ -54,3 +62,5 @@ app.add_middleware(
 app.include_router(health.router, tags=["health"])
 app.include_router(recommendations.router, prefix="/recommendations", tags=["recommendations"])
 app.include_router(find_next.router, prefix="/v1", tags=["find-next"])
+app.include_router(chat.router, prefix="/v1", tags=["chat"])
+app.include_router(preferences.router, prefix="/v1/preferences", tags=["preferences"])
