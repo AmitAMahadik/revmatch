@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from pymongo.asynchronous.database import AsyncDatabase
 
@@ -10,6 +10,8 @@ from app.clients.openai_client import OpenAIClient
 from app.repositories.chat_session_repo import ChatSessionRepo
 from app.services import recommendations_service
 from app.services.card_builder import build_recommendation_cards
+from app.services.preferences_score_service import score_preferences
+from app.schemas.preferences import PreferencesScoreConstraints
 from app.services.query_parser_service import QueryParserService
 
 FIND_NEXT_KEYWORDS = frozenset(
@@ -29,7 +31,9 @@ FIND_NEXT_KEYWORDS = frozenset(
     }
 )
 
-PREFERENCE_CONTEXT_KEYS = frozenset({"manualOnly", "drivenWheels", "year", "limit"})
+PREFERENCE_CONTEXT_KEYS = frozenset(
+    {"manualOnly", "drivenWheels", "year", "limit", "rankedAxes", "minScores", "constraints"}
+)
 
 
 def _should_run_find_next(message: str, context: dict | None) -> bool:
@@ -40,6 +44,14 @@ def _should_run_find_next(message: str, context: dict | None) -> bool:
     if not context:
         return False
     return bool(PREFERENCE_CONTEXT_KEYS & set(context.keys()))
+
+
+def _should_run_preferences_score(context: dict | None) -> bool:
+    """True if UI provided ranked axes; preference scoring is deterministic."""
+    if not context:
+        return False
+    ranked = context.get("rankedAxes")
+    return isinstance(ranked, list) and len(ranked) > 0
 
 
 def _constraints_from_session_context(session_context: dict) -> dict:
@@ -56,6 +68,82 @@ def _constraints_from_session_context(session_context: dict) -> dict:
     if session_context.get("manualOnly") is True:
         constraints["transmission"] = "Manual"
     return constraints
+
+
+def _preference_constraints_from_session_context(session_context: dict) -> dict[str, Any]:
+    """Build PreferencesScoreConstraints from merged session context.
+
+    Precedence:
+      - session_context["constraints"] (if present) is the base
+      - then override with top-level convenience fields (market/year/drivenWheels/manualOnly/limit)
+    """
+    base = session_context.get("constraints")
+    constraints: dict[str, Any] = dict(base) if isinstance(base, dict) else {}
+
+    # US-only for now; allow override if explicitly set.
+    constraints["market"] = session_context.get("market") or constraints.get("market") or "US"
+
+    if session_context.get("year") is not None:
+        constraints["year"] = session_context["year"]
+    if session_context.get("limit") is not None:
+        constraints["limit"] = session_context["limit"]
+    if session_context.get("drivenWheels") is not None:
+        constraints["drivenWheels"] = session_context["drivenWheels"]
+    if session_context.get("manualOnly") is True:
+        constraints["transmission"] = "Manual"
+
+    return constraints
+
+
+async def _call_score_preferences(
+    *,
+    db: AsyncDatabase,
+    ranked_axes: list[str],
+    min_scores: Any,
+    constraints: dict[str, Any] | PreferencesScoreConstraints,
+) -> dict[str, Any]:
+    """Call score_preferences and normalize its output.
+
+    score_preferences expects a PreferencesScoreConstraints model (attribute access like .limit).
+    The chat layer may build constraints as a dict, so we normalize here.
+    """
+    constraints_model: PreferencesScoreConstraints
+    if isinstance(constraints, PreferencesScoreConstraints):
+        constraints_model = constraints
+    else:
+        # Defensive: ensure dict-like input
+        constraints_dict: dict[str, Any] = constraints if isinstance(constraints, dict) else {}
+        constraints_model = PreferencesScoreConstraints(**constraints_dict)
+
+    result: Any
+    try:
+        result = await score_preferences(
+            db=db,
+            ranked_axes=ranked_axes,
+            min_scores=min_scores,
+            constraints=constraints_model,
+        )
+    except TypeError:
+        # Fallback for positional signature
+        result = await score_preferences(
+            db,
+            ranked_axes=ranked_axes,
+            min_scores=min_scores,
+            constraints=constraints_model,
+        )
+
+    # Normalize return: some implementations return (items, weights, filters)
+    if isinstance(result, tuple) and len(result) == 3:
+        items, weights_used, filters_used = result
+        return {
+            "items": items or [],
+            "weightsUsed": weights_used or {},
+            "filtersUsed": filters_used or {},
+        }
+
+    # Assume dict-like result
+    out: dict[str, Any] = result if isinstance(result, dict) else {}
+    return out
 
 
 def _to_str(v: Any) -> str:
@@ -107,14 +195,52 @@ class ChatService:
             [{"role": "user", "content": message}],
         )
 
-        # 3) Decide FindNext vs chat-only and run appropriate flow.
-        if _should_run_find_next(message, session_context):
+        # 3) Decide deterministic preference scoring vs FindNext vs chat-only.
+        if _should_run_preferences_score(session_context):
+            # Preference-scoring flow (deterministic, driven by UI rankedAxes/minScores)
+            ranked_axes = session_context.get("rankedAxes") or []
+            min_scores = session_context.get("minScores")
+            constraints = _preference_constraints_from_session_context(session_context)
+
+            result = await _call_score_preferences(
+                db=self._db,
+                ranked_axes=ranked_axes,
+                min_scores=min_scores,
+                constraints=constraints,
+            )
+
+            items = result.get("items") or []
+            weights_used = result.get("weightsUsed") or {}
+            filters_used = result.get("filtersUsed") or {}
+
+            # Build a parsed_query-like object for card/UI consistency.
+            parsed_query = {
+                "filters": filters_used,
+                "weights": weights_used,
+                "limit": constraints.get("limit", 10),
+                "source": "preferences_score",
+            }
+
+            assistant_text = await self._openai_client.generate_explanation(
+                message, items, parsed_query
+            )
+            cards = build_recommendation_cards(items, parsed_query)
+            used_trim_ids = [_to_str(i.get("trimId")) for i in items]
+            await self._session_repo.set_last_results(session_id, parsed_query, used_trim_ids)
+
+        elif _should_run_find_next(message, session_context):
             # FindNext flow
             constraints = _constraints_from_session_context(session_context)
             parsed_query = await self._query_parser.parse(message, constraints)
-            items = await recommendations_service.find_next(
-                self._db, parsed_query
-            )
+
+            # Enforce precedence: if UI explicitly provided minScores, prefer it over LLM output.
+            ui_min_scores = session_context.get("minScores")
+            if isinstance(ui_min_scores, dict):
+                parsed_filters = parsed_query.get("filters") or {}
+                parsed_filters["minScores"] = ui_min_scores
+                parsed_query["filters"] = parsed_filters
+
+            items = await recommendations_service.find_next(self._db, parsed_query)
             assistant_text = await self._openai_client.generate_explanation(
                 message, items, parsed_query
             )
@@ -123,6 +249,7 @@ class ChatService:
             await self._session_repo.set_last_results(
                 session_id, parsed_query, used_trim_ids
             )
+
         else:
             # Chat-only flow
             assistant_text = await self._openai_client.generate_chat_reply(
