@@ -26,6 +26,7 @@ All writes performed by Cursor/agents via MongoDB Atlas MCP tools must follow th
 - `trimFeatures`
 - `characterScores`
 - `sourceRefs`
+- `dream_renders`
 
 ---
 
@@ -110,6 +111,14 @@ MongoDB collections MUST enforce the following uniqueness constraints (via uniqu
 - `characterScores`: unique on `(trimId, year, market, modelVersion)`
 - `featureCatalog`: unique on `(name, family)`
 - `sourceRefs`: unique on `(type, publisher, title)`
+
+### dream_renders (async dream job persistence)
+
+- `_id`: ObjectId (jobId returned to client as string)
+- Index: `(userId, createdAt)` — for history pagination
+- Index: `(userId, promptHash)` — for dedupe lookup per user
+
+Fields: `userId` (string), `status` (enum: pending, processing, completed, failed), `promptHash` (string), `request` (object), `promptUsed`, `renderProfile`, `meta`, `storageKey`, `imageUrl`, `signedUrl`, `error`, `errorMessage`, `startedAt`, `finishedAt`, `attempts`, `createdAt`, `updatedAt`.
 
 ---
 

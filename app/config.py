@@ -35,8 +35,21 @@ class Settings(BaseSettings):
     openai_api_key: str | None = Field(default=None, validation_alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o-mini", validation_alias="OPENAI_MODEL")
 
+    # S3 (optional; if unset, dream images use OpenAI URL only)
+    aws_access_key_id: str | None = Field(default=None, validation_alias="AWS_ACCESS_KEY_ID")
+    aws_secret_access_key: str | None = Field(default=None, validation_alias="AWS_SECRET_ACCESS_KEY")
+    aws_region: str = Field(default="us-east-1", validation_alias="AWS_REGION")
+    s3_dream_bucket: str | None = Field(default=None, validation_alias="S3_DREAM_BUCKET")
+
     def has_openai(self) -> bool:
         return bool(self.openai_api_key)
+
+    def has_s3(self) -> bool:
+        return bool(
+            self.aws_access_key_id
+            and self.aws_secret_access_key
+            and self.s3_dream_bucket
+        )
 
     @field_validator("cors_origins", mode="before")
     @classmethod

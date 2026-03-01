@@ -10,7 +10,7 @@ Note: imageUrl may be a remote URL or a data URL (data:image/png;base64,...).
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -65,3 +65,40 @@ class DreamResponse(BaseModel):
         description="Deterministic render profile derived from rankedAxes (stance/setting/mood/shotStyle/lens)"
     )
     meta: dict[str, Any] | None = Field(default=None, description="Optional metadata (e.g., model, size)")
+
+
+class DreamJobResponse(BaseModel):
+    """Response from POST /v1/dream (async job submission)."""
+
+    model_config = {"extra": "forbid"}
+
+    jobId: str = Field(description="Job identifier for polling")
+    status: str = Field(description="Job status: pending, processing, or completed")
+    deduped: bool = Field(
+        default=False,
+        description="True if an existing job was returned instead of creating a new one",
+    )
+
+
+class DreamJobDetailResponse(BaseModel):
+    """Response from GET /v1/dream/{jobId}."""
+
+    model_config = {"extra": "forbid"}
+
+    jobId: str
+    status: str
+    promptUsed: str | None = None
+    renderProfile: dict[str, str] | None = None
+    meta: dict[str, Any] | None = None
+    imageUrl: str | None = None
+    signedUrl: str | None = None
+    error: str | None = None
+
+
+class DreamHistoryResponse(BaseModel):
+    """Response from GET /v1/dream/history."""
+
+    model_config = {"extra": "forbid"}
+
+    items: list[dict[str, Any]] = Field(default_factory=list)
+    nextCursor: str | None = None

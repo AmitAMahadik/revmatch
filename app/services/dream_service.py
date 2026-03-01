@@ -78,7 +78,7 @@ def _pretty_preset(value: str) -> str:
     return value.replace("_", " ").strip()
 
 
-async def _get_trim_snapshot(db: AsyncDatabase, trim_id: str) -> dict[str, Any]:
+async def get_trim_snapshot(db: AsyncDatabase, trim_id: str) -> dict[str, Any]:
     """Fetch a grounded snapshot for prompt building.
 
     Strategy:
@@ -155,7 +155,7 @@ async def _get_trim_snapshot(db: AsyncDatabase, trim_id: str) -> dict[str, Any]:
     return snap
 
 
-def _build_prompt(
+def build_prompt(
     *,
     snap: dict[str, Any],
     color_name: str,
@@ -222,9 +222,9 @@ class DreamService:
 
         render_profile = _derive_render_profile_top2(ranked_axes)
 
-        snap = await _get_trim_snapshot(self._db, request.trimId)
+        snap = await get_trim_snapshot(self._db, request.trimId)
 
-        prompt = _build_prompt(
+        prompt = build_prompt(
             snap=snap,
             color_name=request.visual.colorName,
             background_preset=request.visual.backgroundPreset,

@@ -10,6 +10,7 @@ from pymongo import AsyncMongoClient
 from starlette.middleware.cors import CORSMiddleware
 
 from app.clients.openai_client import OpenAIClient
+from app.clients.s3_client import S3Client
 from app.config import get_settings
 from app.routes import chat, dream, find_next, health, preferences, recommendations
 
@@ -24,6 +25,13 @@ def _parse_cors_origins_from_env() -> list[str]:
     return [p.strip() for p in raw.split(",") if p.strip()]
 
 
+async def _ensure_dream_renders_indexes(db):
+    """Create dream_renders collection indexes if not present."""
+    coll = db["dream_renders"]
+    await coll.create_index([("userId", 1), ("createdAt", -1)])
+    await coll.create_index([("userId", 1), ("promptHash", 1)])
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
@@ -34,6 +42,11 @@ async def lifespan(app: FastAPI):
 
     openai_client = OpenAIClient()
     app.state.openai_client = openai_client
+
+    s3_client = S3Client()
+    app.state.s3_client = s3_client if s3_client.is_configured() else None
+
+    await _ensure_dream_renders_indexes(app.state.db)
 
     try:
         yield
