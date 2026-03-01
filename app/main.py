@@ -11,7 +11,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.clients.openai_client import OpenAIClient
 from app.config import get_settings
-from app.routes import chat, find_next, health, preferences, recommendations
+from app.routes import chat, dream, find_next, health, preferences, recommendations
 
 
 def _parse_cors_origins_from_env() -> list[str]:
@@ -63,4 +63,5 @@ app.include_router(health.router, tags=["health"])
 app.include_router(recommendations.router, prefix="/recommendations", tags=["recommendations"])
 app.include_router(find_next.router, prefix="/v1", tags=["find-next"])
 app.include_router(chat.router, prefix="/v1", tags=["chat"])
+app.include_router(dream.router, prefix="/v1", tags=["dream"])
 app.include_router(preferences.router, prefix="/v1/preferences", tags=["preferences"])

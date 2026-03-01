@@ -142,7 +142,7 @@ PARSE_QUERY_SCHEMA = {
 
 
 class OpenAIClient:
-    """Async OpenAI client using httpx. Responses API only."""
+    """Async OpenAI client using httpx. Supports Responses + Images APIs."""
 
     def __init__(self) -> None:
         settings = get_settings()
@@ -337,3 +337,68 @@ class OpenAIClient:
         }
         result = await self._post(payload)
         return _extract_text(result)
+
+    async def generate_image(self, *, prompt: str, size: str = "1024x1024") -> str:
+        """Generate an image via the OpenAI Images API. Returns URL or base64 data URL."""
+        headers = {
+            "Authorization": f"Bearer {self._api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": "gpt-image-1",
+            "prompt": prompt,
+            "size": size,
+        }
+        backoff_delays = [0.5, 1.5]
+
+        for attempt in range(3):
+            try:
+                response = await self._client.post(
+                    "/v1/images/generations", json=payload, headers=headers
+                )
+                response.raise_for_status()
+                try:
+                    data = response.json()
+                except Exception as e:
+                    raise OpenAIClientError("OpenAI image response was not valid JSON") from e
+
+                items = data.get("data") or []
+                if not items:
+                    raise OpenAIClientError("OpenAI image response contained no data items")
+                first = items[0]
+                url = first.get("url")
+                if url:
+                    return url
+                b64_json = first.get("b64_json")
+                if b64_json:
+                    return "data:image/png;base64," + b64_json
+                raise OpenAIClientError(
+                    "OpenAI image response contained neither url nor b64_json"
+                )
+            except httpx.HTTPStatusError as e:
+                status = e.response.status_code
+                if status not in RETRYABLE_STATUS_CODES:
+                    body = ""
+                    try:
+                        body = e.response.text[:500] if e.response.text else ""
+                    except Exception:
+                        pass
+                    raise OpenAIClientError(
+                        f"OpenAI API error {status}: {body}"
+                    ) from e
+                if attempt < 2:
+                    delay = backoff_delays[attempt] + random.uniform(0, 0.1)
+                    await asyncio.sleep(delay)
+                else:
+                    body = ""
+                    try:
+                        body = e.response.text[:500] if e.response.text else ""
+                    except Exception:
+                        pass
+                    raise OpenAIClientError(
+                        f"OpenAI API error {status}: {body}"
+                    ) from e
+            except httpx.RequestError as e:
+                raise OpenAIClientError(f"OpenAI request failed: {e}") from e
+
+        raise AssertionError("unreachable")  # Loop always returns or raises
