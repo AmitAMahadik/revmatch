@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,8 +18,14 @@ class Settings(BaseSettings):
     )
 
     # Connection / DB
-    mongodb_url: str = Field(..., validation_alias="MONGODB_URL")
-    db_name: str = Field("porsche", validation_alias="DB_NAME")
+    mongodb_url: str = Field(
+        ...,
+        validation_alias=AliasChoices("MONGODB_URL", "MDB_MCP_CONNECTION_STRING", "MONGO_URI"),
+    )
+    db_name: str = Field(
+        "porsche",
+        validation_alias=AliasChoices("DB_NAME", "MONGO_DB_NAME"),
+    )
 
     # App runtime
     env: str = Field("dev", validation_alias="ENV")
@@ -45,11 +51,7 @@ class Settings(BaseSettings):
         return bool(self.openai_api_key)
 
     def has_s3(self) -> bool:
-        return bool(
-            self.aws_access_key_id
-            and self.aws_secret_access_key
-            and self.s3_dream_bucket
-        )
+        return bool(self.aws_access_key_id and self.aws_secret_access_key and self.s3_dream_bucket)
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -70,11 +72,5 @@ class Settings(BaseSettings):
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    """
-    Cached settings loader (env vars are read once per process).
-
-    Note: Pydantic BaseSettings populates required fields from environment
-    variables at runtime. Static type checkers (e.g. pyright) cannot see that,
-    so we silence the call-arg warning here.
-    """
+    """Cached settings loader (env vars are read once per process)."""
     return Settings()  # pyright: ignore[reportCallIssue]
