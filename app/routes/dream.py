@@ -23,8 +23,8 @@ router = APIRouter()
 def _get_dream_job_service(request: Request) -> DreamJobService:
     db = request.app.state.db
     openai_client = request.app.state.openai_client
-    s3_client = getattr(request.app.state, "s3_client", None)
-    return DreamJobService(db=db, openai_client=openai_client, s3_client=s3_client)
+    azure_blob_client = getattr(request.app.state, "azure_blob_client", None)
+    return DreamJobService(db=db, openai_client=openai_client, azure_blob_client=azure_blob_client)
 
 
 @router.post("/dream", response_model=DreamJobResponse)
@@ -68,14 +68,33 @@ async def get_dream(
             status_code=404,
             detail={"error": {"type": "not_found", "message": "Dream job not found"}},
         )
+
+    signed_url: str | None = None
+    image_url: str | None = None
+
+    if job.get("storageKey"):
+        azure = getattr(request.app.state, "azure_blob_client", None)
+        if not azure:
+            raise HTTPException(
+                status_code=500,
+                detail={"error": {"type": "storage_error", "message": "Storage not configured"}},
+            )
+        signed_url = await azure.generate_signed_url(job["storageKey"], expires_minutes=60)
+        image_url = signed_url
+    elif (existing := job.get("imageUrl")) and existing.startswith("data:image/"):
+        image_url = existing
+    else:
+        image_url = job.get("imageUrl")
+
     return DreamJobDetailResponse(
         jobId=str(job["_id"]),
         status=job["status"],
         promptUsed=job.get("promptUsed"),
         renderProfile=job.get("renderProfile"),
         meta=job.get("meta"),
-        imageUrl=job.get("imageUrl"),
-        signedUrl=job.get("signedUrl"),
+        storageKey=job.get("storageKey"),
+        imageUrl=image_url,
+        signedUrl=signed_url,
         error=job.get("errorMessage") or job.get("error"),
     )
 

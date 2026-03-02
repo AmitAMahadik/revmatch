@@ -6,13 +6,13 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 
-# Ensure app has state.db, state.openai_client, state.s3_client so the route can run
+# Ensure app has state.db, state.openai_client, state.azure_blob_client so the route can run
 if not hasattr(app.state, "db"):
     app.state.db = MagicMock()
 if not hasattr(app.state, "openai_client"):
     app.state.openai_client = MagicMock()
-if not hasattr(app.state, "s3_client"):
-    app.state.s3_client = None
+if not hasattr(app.state, "azure_blob_client"):
+    app.state.azure_blob_client = None
 
 client = TestClient(app)
 
@@ -163,6 +163,12 @@ def test_user_a_cannot_fetch_user_b_job(mock_job_service_cls):
 
 @patch("app.routes.dream.DreamJobService")
 def test_dream_get_returns_job_when_found(mock_job_service_cls):
+    mock_azure = MagicMock()
+    mock_azure.generate_signed_url = AsyncMock(
+        return_value="https://account.blob.core.windows.net/dreams/prod/user123/507f1f77bcf86cd799439011.png?sv=..."
+    )
+    app.state.azure_blob_client = mock_azure
+
     mock_service = MagicMock()
     mock_service.get_job = AsyncMock(
         return_value={
@@ -172,7 +178,7 @@ def test_dream_get_returns_job_when_found(mock_job_service_cls):
             "promptUsed": "PROMPT",
             "renderProfile": {"stance": "sporty"},
             "meta": {"trimId": "tr_718_gts40"},
-            "signedUrl": "https://s3.example.com/signed",
+            "storageKey": "prod/user123/507f1f77bcf86cd799439011.png",
         }
     )
     mock_job_service_cls.return_value = mock_service
@@ -186,7 +192,74 @@ def test_dream_get_returns_job_when_found(mock_job_service_cls):
     data = response.json()
     assert data["jobId"] == "507f1f77bcf86cd799439011"
     assert data["status"] == "completed"
-    assert data["signedUrl"] == "https://s3.example.com/signed"
+    assert data["signedUrl"] == "https://account.blob.core.windows.net/dreams/prod/user123/507f1f77bcf86cd799439011.png?sv=..."
+    assert data["signedUrl"].startswith("https://")
+    assert "blob.core.windows.net/dreams/prod/" in data["signedUrl"]
+
+
+@patch("app.routes.dream.DreamJobService")
+def test_dream_get_returns_legacy_data_url_when_no_storage_key(mock_job_service_cls):
+    """Backwards compat: doc with data URL imageUrl (no storageKey) returns imageUrl as-is."""
+    mock_service = MagicMock()
+    mock_service.get_job = AsyncMock(
+        return_value={
+            "_id": "507f1f77bcf86cd799439012",
+            "userId": "user123",
+            "status": "completed",
+            "promptUsed": "PROMPT",
+            "renderProfile": {"stance": "sporty"},
+            "meta": {},
+            "imageUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        }
+    )
+    mock_job_service_cls.return_value = mock_service
+
+    response = client.get(
+        "/v1/dream/507f1f77bcf86cd799439012",
+        headers={"X-User-Id": "user123"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["imageUrl"].startswith("data:image/png;base64,")
+    assert data["signedUrl"] is None
+
+
+@patch("app.routes.dream.DreamJobService")
+def test_dream_get_storage_key_signed_url_smoke(mock_job_service_cls):
+    """Smoke: GET with storageKey returns signedUrl from Azure (mocked)."""
+    mock_azure = MagicMock()
+    mock_azure.generate_signed_url = AsyncMock(
+        return_value="https://revmatch.blob.core.windows.net/dreams/prod/user456/job789.png?sv=2021-06-08&se=..."
+    )
+    app.state.azure_blob_client = mock_azure
+
+    mock_service = MagicMock()
+    mock_service.get_job = AsyncMock(
+        return_value={
+            "_id": "507f1f77bcf86cd799439013",
+            "userId": "user456",
+            "status": "completed",
+            "promptUsed": "PROMPT",
+            "renderProfile": {},
+            "meta": {},
+            "storageKey": "prod/user456/job789.png",
+        }
+    )
+    mock_job_service_cls.return_value = mock_service
+
+    response = client.get(
+        "/v1/dream/507f1f77bcf86cd799439013",
+        headers={"X-User-Id": "user456"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["storageKey"] == "prod/user456/job789.png"
+    assert data["signedUrl"] is not None
+    assert data["signedUrl"].startswith("https://")
+    assert "blob.core.windows.net/dreams/prod/" in data["signedUrl"]
+    assert data["imageUrl"] == data["signedUrl"]
 
 
 @patch("app.routes.dream.DreamJobService")

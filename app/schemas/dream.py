@@ -90,6 +90,7 @@ class DreamJobDetailResponse(BaseModel):
     promptUsed: str | None = None
     renderProfile: dict[str, str] | None = None
     meta: dict[str, Any] | None = None
+    storageKey: str | None = None
     imageUrl: str | None = None
     signedUrl: str | None = None
     error: str | None = None

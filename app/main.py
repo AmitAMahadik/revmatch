@@ -9,8 +9,8 @@ from fastapi import FastAPI
 from pymongo import AsyncMongoClient
 from starlette.middleware.cors import CORSMiddleware
 
+from app.clients.azure_blob_client import AzureBlobClient
 from app.clients.openai_client import OpenAIClient
-from app.clients.s3_client import S3Client
 from app.config import get_settings
 from app.routes import chat, dream, find_next, health, preferences, recommendations
 
@@ -43,8 +43,10 @@ async def lifespan(app: FastAPI):
     openai_client = OpenAIClient()
     app.state.openai_client = openai_client
 
-    s3_client = S3Client()
-    app.state.s3_client = s3_client if s3_client.is_configured() else None
+    try:
+        app.state.azure_blob_client = AzureBlobClient()
+    except RuntimeError:
+        app.state.azure_blob_client = None
 
     await _ensure_dream_renders_indexes(app.state.db)
 
