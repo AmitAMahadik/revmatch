@@ -12,7 +12,7 @@ from starlette.middleware.cors import CORSMiddleware
 from app.clients.azure_blob_client import AzureBlobClient
 from app.clients.openai_client import OpenAIClient
 from app.config import get_settings
-from app.routes import chat, dream, find_next, health, preferences, recommendations
+from app.routes import chat, dream, find_next, health, preferences, recommendations, shortlist
 
 
 def _parse_cors_origins_from_env() -> list[str]:
@@ -32,6 +32,17 @@ async def _ensure_dream_renders_indexes(db):
     await coll.create_index([("userId", 1), ("promptHash", 1)])
 
 
+async def _ensure_shortlist_indexes(db):
+    """Create shortlist_items and user_prefs collection indexes if not present."""
+    shortlist_coll = db["shortlist_items"]
+    await shortlist_coll.create_index(
+        [("userId", 1), ("type", 1), ("refId", 1)], unique=True
+    )
+    await shortlist_coll.create_index([("userId", 1), ("createdAt", -1)])
+    prefs_coll = db["user_prefs"]
+    await prefs_coll.create_index([("userId", 1)], unique=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
@@ -49,6 +60,7 @@ async def lifespan(app: FastAPI):
         app.state.azure_blob_client = None
 
     await _ensure_dream_renders_indexes(app.state.db)
+    await _ensure_shortlist_indexes(app.state.db)
 
     try:
         yield
@@ -80,3 +92,4 @@ app.include_router(find_next.router, prefix="/v1", tags=["find-next"])
 app.include_router(chat.router, prefix="/v1", tags=["chat"])
 app.include_router(dream.router, prefix="/v1", tags=["dream"])
 app.include_router(preferences.router, prefix="/v1/preferences", tags=["preferences"])
+app.include_router(shortlist.router, prefix="/v1/shortlist", tags=["shortlist"])

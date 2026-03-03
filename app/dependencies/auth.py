@@ -32,3 +32,14 @@ async def get_current_user_id(request: Request) -> str:
                 detail="Anonymous not allowed",
             )
     return user_id or "anonymous"
+
+
+async def require_user_id(request: Request) -> str:
+    """Require X-User-Id header; return 400 if missing or blank."""
+    user_id = request.headers.get("X-User-Id", "").strip()
+    if not user_id:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"type": "missing_user_id", "message": "X-User-Id header required"}},
+        )
+    return user_id
