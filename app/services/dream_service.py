@@ -28,7 +28,7 @@ DEFAULT_RENDER_PROFILE: dict[str, str] = {
     "setting": "canyon_road",
     "mood": "premium",
     "shotStyle": "clean",
-    "lens": "50mm",
+    "lens": "35mm",
 }
 
 
@@ -42,7 +42,7 @@ def _derive_render_profile_top2(ranked_axes: list[str]) -> dict[str, str]:
     - setting: tunnel if acousticDrama is top-2; track if trackReadiness is top-2; else canyon
     - mood: refined if dailyCompliance is top-2; else cinematic
     - shotStyle: rolling/action if revHappiness is top-2; else clean/static
-    - lens: 35mm if steeringFeel is top-2; else 50mm
+    - lens: 24mm if steeringFeel is top-2; else 35mm
     """
 
     if not ranked_axes:
@@ -63,7 +63,7 @@ def _derive_render_profile_top2(ranked_axes: list[str]) -> dict[str, str]:
 
     shot_style = "rolling_action" if "revHappiness" in top2 else "clean_static"
 
-    lens = "35mm" if "steeringFeel" in top2 else "50mm"
+    lens = "24mm" if "steeringFeel" in top2 else "35mm"
 
     return {
         "stance": stance,
