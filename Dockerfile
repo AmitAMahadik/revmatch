@@ -1,5 +1,5 @@
 # Production image. Set MONGO_URI (or MONGODB_URL) at runtime; no secrets in image.
-FROM python:3.12-slim
+FROM --platform=linux/amd64 python:3.12-slim
 
 WORKDIR /app
 
