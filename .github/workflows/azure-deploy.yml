@@ -7,7 +7,8 @@ on:
 
 env:
   AZURE_RESOURCE_GROUP: rg-revmatch
-  CONTAINER_APP_NAME: revmatch-api
+  CONTAINER_APP_NAME: revmatch-api-nat
+  CONTAINER_APP_ENVIRONMENT: revmatch-aca-env-nat
   ACR_NAME: revmatchacr
   IMAGE_NAME: revmatch
 
@@ -43,4 +44,5 @@ jobs:
         with:
           resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
           containerAppName: ${{ env.CONTAINER_APP_NAME }}
+          containerAppEnvironment: ${{ env.CONTAINER_APP_ENVIRONMENT }}
           imageToDeploy: ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
