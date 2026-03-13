@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any
+from typing import Any, Annotated
 
 from pydantic import AliasChoices, Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -32,7 +32,10 @@ class Settings(BaseSettings):
 
     # Comma-separated list of allowed origins, e.g. "https://example.com,http://localhost:5173"
     # Use "*" to allow all.
-    cors_origins: list[str] = Field(default_factory=list, validation_alias="CORS_ORIGINS")
+    cors_origins: Annotated[list[str], NoDecode] = Field(
+        default_factory=list,
+        validation_alias="CORS_ORIGINS",
+    )
 
     # Optional DB ping during /health
     health_db_check: bool = Field(False, validation_alias="HEALTH_DB_CHECK")
